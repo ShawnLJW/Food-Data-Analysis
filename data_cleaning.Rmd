@@ -1,0 +1,65 @@
+---
+title: "Data cleaning"
+output: rmarkdown::github_document
+date: "2022-08-02"
+---
+
+The Food and Agriculture Organization (FAO) of the United Nations (UN) leads international efforts to defeat hunger and improve nutrition and food security. FAOSTAT, the statistics division of FAO, provides free access to [food and agriculture data](https://www.fao.org/faostat/en/#data) for over 245 countries.\
+In this project, the datasets provided by FAOSTAT will be cleaned according to the [tidy data framework](https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html).
+
+## Importing libraries
+
+```{r, message=FALSE}
+library(tidyverse)
+library(knitr)
+```
+
+## Datasets
+
+The datasets are downloaded in CSV format.
+
+```{r, message=FALSE}
+food_balances <- read_csv("data\\FoodBalanceSheets_E_All_Data_NOFLAG.csv")
+```
+
+Food balances:
+
+```{r, echo=FALSE}
+kable(head(food_balances))
+```
+
+## Cleaning
+### Food balances
+
+-   Rows with Item == "eggs", "milk", or "miscellaneous" are duplicated as these items have 2 distinct - Item Codes each. We filter out these duplicate items.
+-   The Area Code, Item Code, Element Code, and Unit columns will be dropped as they do not contain any new information.
+-   The Y2010 to Y2019 columns are values and not variables. We pivot these columns into 2 new columns: Year and value. We also convert the year values to integers for easy sorting later on.
+-   The values in Element are variable names. We pivot each element onto a different column.
+
+```{r , message=FALSE}
+food_balances <- food_balances %>%
+  filter(!(`Item Code` %in% c("2949","2948","2928"))) %>%
+  select(-c("Area Code", "Item Code", "Element Code", "Unit")) %>%
+  pivot_longer(Y2010:Y2019,names_to = "Year", values_to = "value") %>%
+  mutate(Year = as.integer(gsub("Y","",Year)),
+         Item = replace(Item, Item == "Population", "Grand Total")) %>%
+  pivot_wider(names_from = Element, values_from = value)
+```
+
+The food balances dataset is now in a tidy form. Next:
+
+-   We rename certain columns for simplicity
+-   There are columns in units of 1,000. We multiply the values in these columns by 1,000 to get the actual values
+
+```{r , message=FALSE}
+food_balances <- food_balances %>%
+  rename("Population" = `Total Population - Both sexes`) %>%
+  mutate(Population = Population * 1000) %>%
+  mutate(across(Production:Food, ~ .x * 1000))
+```
+
+Cleaned dataset:
+
+```{r, echo=FALSE}
+kable(head(food_balances))
+```
