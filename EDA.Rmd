@@ -1,0 +1,27 @@
+---
+title: "Exploratory Data Analysis"
+output: rmarkdown::github_document
+date: "2022-08-03"
+---
+
+```{r, echo=FALSE, message=FALSE}
+library(tidyverse)
+library(scales)
+food_balances <- read_csv("data\\food_balances.csv")
+```
+
+```{r, echo=FALSE}
+population_table <- food_balances %>%
+  select(Area, Year, Population) %>%
+  drop_na() %>%
+  filter(Area == "World")
+population_table$Year <- ordered(population_table$Year)
+ggplot() +
+  ggtitle("Population growth") +
+  geom_line(data=population_table, aes(x=Year, y=Population, colour="darkblue", group=1)) +
+  scale_color_manual(values = c("Population" = "darkblue")) +
+  scale_y_continuous(labels = unit_format(unit = "B", scale = 1e-9)) +
+  theme(
+    axis.title=element_blank()
+  )
+```

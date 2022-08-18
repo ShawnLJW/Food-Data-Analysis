@@ -29,6 +29,7 @@ kable(head(food_balances))
 ```
 
 ## Cleaning
+
 ### Food balances
 
 -   Rows with Item == "eggs", "milk", or "miscellaneous" are duplicated as these items have 2 distinct - Item Codes each. We filter out these duplicate items.
